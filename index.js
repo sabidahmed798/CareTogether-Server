@@ -48,6 +48,18 @@ const result = await eventCollection.findOne({_id: new ObjectId(id)})
  res.send(result)
 })
 
+app.patch('/upcoming-event/:id', async(req, res) =>{
+  const {id} = req.params
+  const updatedData = req.body
+  const result = await eventCollection.updateOne(
+   
+     {_id: new ObjectId(id) },
+     {$set: updatedData}
+
+
+  )
+res.json(result)
+} )
 
 //http://localhost:8000/create-event
 app.get('/', (req, res) => {
