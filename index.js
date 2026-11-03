@@ -1,4 +1,4 @@
-import express  from 'express';
+﻿import express  from 'express';
 import { MongoClient, ObjectId } from 'mongodb';
 import 'dotenv/config'
 import cors from "cors"
@@ -28,7 +28,7 @@ const eventCollection = db.collection("event")
 
 
 
-app.post("/create-event", async(req,res)=>{
+app.post("/upcoming-event", async(req,res)=>{
   const data = req.body
 
   const result = await  eventCollection.insertOne(data)
@@ -49,17 +49,20 @@ const result = await eventCollection.findOne({_id: new ObjectId(id)})
 })
 
 app.patch('/upcoming-event/:id', async(req, res) =>{
-  const {id} = req.params
+  const {id} = req.params;
   const updatedData = req.body
   const result = await eventCollection.updateOne(
-   
-     {_id: new ObjectId(id) },
-     {$set: updatedData}
-
-
+    {_id: new ObjectId(id)},
+    {$set: updatedData}
   )
-res.json(result)
-} )
+  res.json(result)
+})
+
+app.delete('/upcoming-event/:id', async(req, res) =>{
+ const {id} = req.params;
+ const result = await eventCollection.deleteOne({_id: new ObjectId( id)})
+ res.json(result)
+})
 
 //http://localhost:8000/create-event
 app.get('/', (req, res) => {
