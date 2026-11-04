@@ -25,6 +25,7 @@ const mongoClient = await connectToMongoDB()
 
 const db = mongoClient.db("caretogether")
 const eventCollection = db.collection("event")
+const  joineventCollection = db.collection("joinevent")
 
 
 
@@ -64,7 +65,24 @@ app.delete('/upcoming-event/:id', async(req, res) =>{
  res.json(result)
 })
 
-//http://localhost:8000/create-event
+app.post('/joinevent', async(req, res) =>{
+  const data = req.body
+  delete data._id
+   const result = await joineventCollection.insertOne(data)
+   res.send(result)
+
+})
+
+app.get('/all-joinedevent/:email', async(req, res) => {
+  const {email} = req.params
+console.log(email)
+ 
+  const result = await joineventCollection.find({userEmail: email}).toArray();
+console.log(result)
+   res.send(result)
+})
+
+//http://localhost:8000/all-joinedevent/
 app.get('/', (req, res) => {
   res.send({message: 'Server is running fine!'})
 })
