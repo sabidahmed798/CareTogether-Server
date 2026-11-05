@@ -12,6 +12,7 @@ app.use(express.json())
 const client = new MongoClient(process.env.MONGODB_URL);
 
 export async function connectToMongoDB() {
+
   try {
     await client.connect();
     console.log("You successfully connected to MongoDB!");
@@ -28,8 +29,19 @@ const eventCollection = db.collection("event")
 const  joineventCollection = db.collection("joinevent")
 
 
+const verifyApi = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+console.log(authHeader)
 
-app.post("/upcoming-event", async(req,res)=>{
+if(authHeader!=="user logged in"){
+  return res.status(401).send({msg: 'Unauthorized!'})
+}
+console.log("i am middleware")
+next();
+}
+
+
+app.post("/upcoming-event",  async(req,res)=>{
   const data = req.body
 
   const result = await  eventCollection.insertOne(data)
@@ -43,13 +55,20 @@ app.get('/upcoming-event' , async(req,res) => {
  res.send(result)
 })
 
-app.get('/upcoming-event/:id', async(req,res)=>{
+app.get('/upcoming-event/:id', verifyApi, async(req, res )=>{
+
+  
  const {id} = req.params;
 const result = await eventCollection.findOne({_id: new ObjectId(id)})
  res.send(result)
 })
 
-app.patch('/upcoming-event/:id', async(req, res) =>{
+app.get('/recent-upcoming', async(req, res) =>{
+   const result = await eventCollection.find().limit(6).toArray()
+   res.send(result)
+  })
+
+app.patch('/upcoming-event/:id',  async(req, res) =>{
   const {id} = req.params;
   const updatedData = req.body
   const result = await eventCollection.updateOne(
