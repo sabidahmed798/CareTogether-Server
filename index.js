@@ -2,6 +2,7 @@
 import { MongoClient, ObjectId } from 'mongodb';
 import 'dotenv/config'
 import cors from "cors"
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 const app = express()
 const PORT = 8000
@@ -29,19 +30,24 @@ const eventCollection = db.collection("event")
 const  joineventCollection = db.collection("joinevent")
 
 
-const verifyApi = (req, res, next) => {
+const verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
-console.log(authHeader)
-
-if(authHeader!=="user logged in"){
-  return res.status(401).send({msg: 'Unauthorized!'})
+if(!authHeader) {
+   return res.status(401).send({msg: 'Unauthorized!'});
 }
-console.log("i am middleware")
+
+const token = authHeader.split(" ")[1]
+
+const JWKS = createRemoteJWKSet(new URL('http://localhost:3000/api/auth/jwks'))
+
+const {payload} = await jwtVerify(token, JWKS)
+console.log(payload)
+
 next();
 }
 
 
-app.post("/upcoming-event",  async(req,res)=>{
+app.post("/upcoming-event", verifyToken,    async(req, res)=>{
   const data = req.body
 
   const result = await  eventCollection.insertOne(data)
@@ -50,12 +56,12 @@ console.log(result);
    res.send(result)
 })
 
-app.get('/upcoming-event' , async(req,res) => {
+app.get('/upcoming-event', verifyToken, async(req, res) => {
  const result = await  eventCollection.find().toArray()
  res.send(result)
 })
 
-app.get('/upcoming-event/:id', verifyApi, async(req, res )=>{
+app.get('/upcoming-event/:id',  verifyToken , async(req, res )=>{
 
   
  const {id} = req.params;
@@ -63,14 +69,15 @@ const result = await eventCollection.findOne({_id: new ObjectId(id)})
  res.send(result)
 })
 
-app.get('/recent-upcoming', async(req, res) =>{
+app.get('/recent-upcoming', verifyToken, async(req, res) =>{
    const result = await eventCollection.find().limit(6).toArray()
    res.send(result)
   })
 
-app.patch('/upcoming-event/:id',  async(req, res) =>{
+app.patch('/upcoming-event/:id', verifyToken, async(req, res) =>{
   const {id} = req.params;
   const updatedData = req.body
+  console.log(id)
   const result = await eventCollection.updateOne(
     {_id: new ObjectId(id)},
     {$set: updatedData}
@@ -78,13 +85,13 @@ app.patch('/upcoming-event/:id',  async(req, res) =>{
   res.json(result)
 })
 
-app.delete('/upcoming-event/:id', async(req, res) =>{
+app.delete('/upcoming-event/:id', verifyToken, async(req, res) =>{
  const {id} = req.params;
  const result = await eventCollection.deleteOne({_id: new ObjectId( id)})
  res.json(result)
 })
 
-app.post('/joinevent', async(req, res) =>{
+app.post('/joinevent', verifyToken, async(req, res) =>{
   const data = req.body
   delete data._id
    const result = await joineventCollection.insertOne(data)
@@ -92,7 +99,7 @@ app.post('/joinevent', async(req, res) =>{
 
 })
 
-app.get('/all-joinedevent/:email', async(req, res) => {
+app.get('/all-joinedevent/:email',verifyToken, async(req, res) => {
   const {email} = req.params
 console.log(email)
  
