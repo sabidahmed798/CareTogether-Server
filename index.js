@@ -38,7 +38,7 @@ if(!authHeader) {
 
 const token = authHeader.split(" ")[1]
 
-const JWKS = createRemoteJWKSet(new URL('http://localhost:3000/api/auth/jwks'))
+const JWKS = createRemoteJWKSet(new URL(`${process.env.CLIENT_URL}/api/auth/jwks`))
 
 const {payload} = await jwtVerify(token, JWKS)
 console.log(payload)
@@ -47,7 +47,7 @@ next();
 }
 
 
-app.post("/upcoming-event", verifyToken,    async(req, res)=>{
+app.post("/upcoming-event",    async(req, res)=>{
   const data = req.body
 
   const result = await  eventCollection.insertOne(data)
@@ -56,20 +56,21 @@ console.log(result);
    res.send(result)
 })
 
-app.get('/upcoming-event', verifyToken, async(req, res) => {
+app.get('/upcoming-event', async(req, res) => {
  const result = await  eventCollection.find().toArray()
  res.send(result)
 })
 
-app.get('/upcoming-event/:id',  verifyToken , async(req, res )=>{
-
+app.get('/upcoming-event/:id', async(req, res )=>{
+// console.log(req.params.id)
   
  const {id} = req.params;
 const result = await eventCollection.findOne({_id: new ObjectId(id)})
  res.send(result)
 })
 
-app.get('/recent-upcoming', verifyToken, async(req, res) =>{
+//
+app.get('/recent-upcoming',  async(req, res) =>{
    const result = await eventCollection.find().limit(6).toArray()
    res.send(result)
   })
